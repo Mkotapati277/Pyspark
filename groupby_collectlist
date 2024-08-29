@@ -1,0 +1,14 @@
+
+data = [ ("a","aa",1),
+         ("a","aa",2),
+         ("b","bb",5),
+         ("b","bb",3),
+         ("b","bb",4)
+         ]
+#define schema
+schema = ["col1","col2","col3"]
+df =spark.createDataFrame(data,schema)
+df.show()
+
+res = df.groupBy(col("col1"),col("col2")).agg(collect_list("col3").alias("col3"))
+res.show()
