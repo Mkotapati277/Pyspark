@@ -1,0 +1,41 @@
+from pyspark.sql import SparkSession, Row
+from pyspark.sql.functions import countDistinct
+from pyspark.sql.functions import mean,col,split,monotonically_increasing_id,collect_list,explode,to_date,avg,max,lag,lead,when,sum,first,last,coalesce
+from pyspark.sql.types import IntegerType
+from pyspark.sql.window import Window
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+import sys
+import os
+import urllib.request
+import ssl
+
+python_path = sys.executable
+os.environ['PYSPARK_PYTHON'] = python_path
+os.environ['JAVA_HOME'] = r''
+conf = SparkConf().setAppName("pyspark").setMaster("local[*]").set("spark.driver.host","localhost")
+sc = SparkContext(conf=conf)
+spark = SparkSession.builder.getOrCreate()
+# Initialize Spark session
+spark = SparkSession.builder.appName("").getOrCreate()
+
+# Define the data
+data = [
+    (1, "Alice"),
+    (2, "Bob"),
+    (3, "Charlie"),
+    (4, "David"),
+    (5, "Eve") ]
+df = spark.createDataFrame(data,["id","student"])
+df.show()
+
+df1 = df.withColumn("prev_student",lag("student").over(Window.orderBy("id")))
+df1.show()
+df2 =df1.withColumn("next_student",lead("student").over(Window.orderBy("id")))
+df2.show()
+
+df3 = df2.withColumn("exc_student", when(col("id") %2 == 1 ,coalesce(df2["next_student"],df2["student"]))
+                     .when(col("id")%2== 0,coalesce(df2["prev_student"],df2["student"]))
+                     .otherwise(df2["student"])).drop("prev_student","next_student")
+df3.show()
+
