@@ -1,0 +1,42 @@
+#find the avg prive for each stock on daily basis
+# find the max price of each stock 
+
+from pyspark.sql import SparkSession, Row
+from pyspark.sql.functions import countDistinct
+from pyspark.sql.functions import mean,col,split,monotonically_increasing_id,collect_list,explode,to_date,avg,max
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+import sys
+import os
+import urllib.request
+import ssl
+
+python_path = sys.executable
+os.environ['PYSPARK_PYTHON'] = python_path
+os.environ['JAVA_HOME'] = r''
+conf = SparkConf().setAppName("pyspark").setMaster("local[*]").set("spark.driver.host","localhost")
+sc = SparkContext(conf=conf)
+spark = SparkSession.builder.getOrCreate()
+# Initialize Spark session
+spark = SparkSession.builder.appName("").getOrCreate()
+
+# Define the data (replace this with your actual data)
+data = [
+    ("AAPL", "2023-01-01", 150.0),("AAPL", "2023-01-01", 200.0),
+    ("AAPL", "2023-01-02", 155.0),("AAPL", "2023-01-02", 350.0),
+    ("GOOG", "2023-01-01", 2550.0),("GOOG", "2023-01-01", 2300.0),
+    ("GOOG", "2023-01-02", 2550.0),("GOOG", "2023-01-02", 2960.0),
+    ("MSFT", "2023-01-01", 300.0),("MSFT", "2023-01-01", 500.0),
+    ("MSFT", "2023-01-02", 310.0),("MSFT", "2023-01-02", 900.0),
+       ]
+schema = ["stock","date","price"]
+df = spark.createDataFrame(data,schema)
+df1 = df.withColumn("date",to_date("date"))
+df1.show()
+df1.printSchema()
+
+df2 = df1.groupBy("stock","date").agg(avg("price").alias("avgprice"))
+df2.show()
+
+df3 = df2.groupBy("stock").agg(max("avgprice").alias("maxprice"))
+df3.show()
