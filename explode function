@@ -1,0 +1,11 @@
+
+data = [
+  {"dept": "101", "id": 1, "eid": [10101,10102,10103]},
+  {"dept": "102", "id": 2, "eid": [10201,10202]},
+  {"dept": "103", "id": 3, "eid": [10301,10302,10303,10304] }
+]
+df= spark.createDataFrame(data).drop("id")
+df.show(truncate = False)
+
+df1= df.withColumn("eid",explode(df["eid"]))
+df1.show()
