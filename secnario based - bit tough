@@ -1,0 +1,46 @@
+
+
+from pyspark.sql import SparkSession, Row
+from pyspark.sql.functions import countDistinct
+from pyspark.sql.functions import mean,col,split,monotonically_increasing_id,collect_list,explode,to_date,avg,max,lag,lead,when,sum,first,last
+from pyspark.sql.types import IntegerType
+from pyspark.sql.window import Window
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+import sys
+import os
+import urllib.request
+import ssl
+
+python_path = sys.executable
+os.environ['PYSPARK_PYTHON'] = python_path
+os.environ['JAVA_HOME'] = r''
+conf = SparkConf().setAppName("pyspark").setMaster("local[*]").set("spark.driver.host","localhost")
+sc = SparkContext(conf=conf)
+spark = SparkSession.builder.getOrCreate()
+# Initialize Spark session
+spark = SparkSession.builder.appName("").getOrCreate()
+
+# Define the data (replace this with your actual data)
+data = [
+    ("2024-08-01", "Won"),
+    ("2024-08-02", "Won"),
+    ("2024-08-03", "Won"),
+    ("2024-08-04", "lost"),
+    ("2024-08-05", "lost"),
+    ("2024-08-06", "lost"),
+    ("2024-08-07", "Won")
+    ]
+
+df = spark.createDataFrame(data,["event_date","event_status"])
+df =df.withColumn("event_date",to_date("event_date"))
+df.show()
+df.printSchema()
+
+df1 = df.withColumn("event_change", when( col("event_status") != lag("event_status").over(Window.orderBy("event_date")),1).otherwise(0))
+df1 = df1.withColumn("event_change", col("event_change").cast(IntegerType()))
+df1.show()
+df2 = df1.withColumn("event_group", sum("event_change").over(Window.orderBy("event_date")))
+df2.show()
+df3 = df2.groupBy("event_group","event_status").agg(first("event_date").alias("start_date"),last("event_date").alias("last_date")).drop("event_group")
+df3.show()
